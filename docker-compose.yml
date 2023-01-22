@@ -1,0 +1,68 @@
+version: '3.1'
+
+services:
+#database engine service
+  mariadb_db_qa:
+    container_name: mariadb_qa
+    image: mariadb:latest
+    restart: always
+    networks:
+      - env_qa 
+    ports:
+      - 3306:3306
+    #volumes:
+    #  - /var/lib/mariadb:/var/lib/mysql
+    environment:
+      MARIADB_USER: mariadb
+      MARIADB_ROOT_PASSWORD: Mechalero1234.
+      MARIADB_PASSWORD: Mechalero1234.
+      MARIADB_DATABASE: db_ms_products  
+      
+#database admin service
+#Use for All enviroments
+  adminer:
+    container_name: adminer
+    image: adminer
+    restart: always
+    networks:
+      - env_qa
+    depends_on: 
+      - mariadb_db_qa
+    ports:
+       - 9090:8080
+
+#ENV_DEV
+#product app backend service
+  ms-product-qa:
+    build:
+      context: ./app
+      args:
+        - JAR_FILE=demo-ms-products-0.0.1-SNAPSHOT.jar
+    networks:
+      - env_qa     
+    container_name: ms-product-qa     
+    environment:
+       - JAVA_OPTS=
+         -Xms256M 
+         -Xmx256M         
+    depends_on:     
+      - mariadb_db_qa
+    ports:
+      - 8080:8080 
+
+networks:
+  env_qa:
+    driver: bridge  
+    #activate ipv6
+    driver_opts: 
+            com.docker.network.enable_ipv6: "true"
+    #IP Adress Manager
+    ipam: 
+        driver: default
+        config:
+        - 
+          subnet: 172.16.232.0/24
+          gateway: 172.16.232.1
+        - 
+          subnet: "2001:3974:3979::/64"
+          gateway: "2001:3974:3979::1"
